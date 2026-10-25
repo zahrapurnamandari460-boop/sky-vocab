@@ -1463,5 +1463,148 @@ body.theme-midnight{--fv-top:#2a3a73;--fv-mid:#1c2750;--fv-bot:#10172c;--fv-clou
     info.innerHTML=AV+'<div><div class="pf-t">Pelajar Sky Vocab</div><div class="pf-s">'+(st?st+' \u2022 ':'')+'Mode '+md+'</div></div>';markTheme()}};
 })();
 </script>
+<script id="vocab-per-mode">
+/* Vocab dipisah per mode: Manual, Otomatis-Kata, Otomatis-Kalimat, Otomatis-Toolkit */
+(function(){
+  const CTXS=['manual','auto_kata','auto_kalimat','auto_toolkit'];
+  const K=()=>mode==='manual'?'manual':'auto_'+autoType;
+  const rd=k=>lsJ(k,null),nm=w=>String(w||'').toLowerCase();
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const day1=o=>nm(((o&&o['Day 1']||[])[0]||{}).word);
+  let active=localStorage.getItem('ctx_active');
+  function guess(){
+    const w0=day1(vocab);
+    if(!w0)return 'auto_kata';
+    if(TOOLKIT_WEEKS.some(w=>day1(w)===w0))return 'auto_toolkit';
+    if([0,1,2].some(k=>day1(weekSet('kalimat',k))===w0)||PHRASE_BANK.some(x=>nm(x)===w0))return 'auto_kalimat';
+    if(w0==='accurate'||[0,1,2].some(k=>day1(weekSet('kata',k))===w0)||WORD_BANK.some(x=>nm(x)===w0))return 'auto_kata';
+    return 'manual';
+  }
+  if(!active||!CTXS.includes(active)){active=guess();localStorage.setItem('ctx_active',active)}
+  function flush(){try{localStorage.setItem('vocab_ctx_'+active,JSON.stringify(vocab));localStorage.setItem('prog_ctx_'+active,JSON.stringify(prog))}catch(e){}}
+  function defFor(k){
+    if(k==='manual')return{v:cleanVocab({}),p:{unlockedDay:1}};
+    return{v:cleanVocab(clone(weekSet(k.slice(5),0))),p:{unlockedDay:1,week:0}};
+  }
+  function switchTo(k){
+    if(k===active)return;
+    flush();
+    const sv=rd('vocab_ctx_'+k),sp=rd('prog_ctx_'+k),d=defFor(k);
+    vocab=sv?cleanVocab(sv):d.v;
+    prog=sp?objOr(sp,d.p):d.p;
+    active=k;localStorage.setItem('ctx_active',k);
+    localStorage.setItem('vocab_sky_balanced',JSON.stringify(vocab));
+    localStorage.setItem('vocab_checklist_progress',JSON.stringify(prog));
+    flush();
+    try{syncPush()}catch(e){}
+  }
+  flush();
+  setInterval(flush,2000);
+  addEventListener('pagehide',flush);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
+  const _g=goDash;
+  goDash=function(){switchTo(K());return _g.apply(this,arguments)};
+
+  function allCtx(){flush();const o={};CTXS.forEach(k=>{const v=rd('vocab_ctx_'+k);if(v)o[k]={vocab:v,prog:rd('prog_ctx_'+k)}});return o}
+  syncPush=function(){
+    let st=document.getElementById('cloudStatus');
+    if(!window.__db){window.addEventListener('fb-ready',syncPush,{once:true});if(st)st.innerText='⏳ Nyambungin ke cloud...';return}
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(async()=>{
+      try{
+        const code=getCode();
+        const{doc,setDoc,serverTimestamp}=window.__fs;
+        await setDoc(doc(window.__db,'syncs',code),{vocab,history,prog,bank,streak,ctxData:allCtx(),ctxActive:active,theme:localStorage.getItem('sky_theme')||'sky',updatedAt:serverTimestamp()});
+        let s2=document.getElementById('cloudStatus');if(s2)s2.innerText='☁️ Tersimpan ✓ '+new Date().toLocaleTimeString('id-ID');
+      }catch(e){let s2=document.getElementById('cloudStatus');if(s2)s2.innerText='⚠️ Gagal simpan, cek internet'}
+    },900);
+  };
+  syncPullByCode=async function(code){
+    code=cleanCode(code);
+    if(!code){showM('Isi dulu','Masukin kode dari HP lain');return}
+    if(!window.__db){showM('Cloud belum siap','Coba lagi sebentar ya');return}
+    try{
+      const{doc,getDoc}=window.__fs;
+      const snap=await getDoc(doc(window.__db,'syncs',code));
+      if(!snap.exists()){showM('Kode gak ketemu','Cek lagi kodenya ya');return}
+      const d=snap.data();
+      if(d.ctxData&&typeof d.ctxData==='object'){
+        for(const k of CTXS){const c=d.ctxData[k];if(c&&c.vocab){localStorage.setItem('vocab_ctx_'+k,JSON.stringify(cleanVocab(c.vocab)));if(c.prog)localStorage.setItem('prog_ctx_'+k,JSON.stringify(objOr(c.prog,{unlockedDay:1})))}}
+        const c=d.ctxData[active];
+        if(c&&c.vocab){vocab=cleanVocab(c.vocab);prog=objOr(c.prog,{unlockedDay:1})}
+      }else{
+        if(d.vocab)vocab=cleanVocab(d.vocab);
+        if(d.prog)prog=objOr(d.prog,{unlockedDay:1});
+      }
+      if(d.history)history=cleanHistory(d.history);
+      if(d.bank)bank=cleanBank(d.bank);
+      if(d.streak)streak=objOr(d.streak,{count:0,last:0});
+      localStorage.setItem('vocab_sky_balanced',JSON.stringify(vocab));
+      localStorage.setItem('vocab_history',JSON.stringify(history));
+      localStorage.setItem('vocab_checklist_progress',JSON.stringify(prog));
+      localStorage.setItem('vocab_bank',JSON.stringify(bank));
+      localStorage.setItem('vocab_streak',JSON.stringify(streak));
+      localStorage.setItem('sky_sync_code',code);
+      flush();
+      if(['sky','sunset','forest','midnight'].includes(d.theme))setTheme(d.theme);
+      upd();
+      showM('Ditarik! ☁️','Data dari kode itu udah masuk sini');
+    }catch(e){showM('Gagal tarik','Cek koneksi internet dulu ya')}
+  };
+})();
+</script>
+<style id="pos-style">
+.pos-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px 0 8px;letter-spacing:0}
+.pos-row .pc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:12px;font-weight:800}
+.pos-row .pc i{font-style:normal;font-weight:600;opacity:.85}
+.pos-tag{display:inline-block;margin-left:7px;padding:1px 8px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:11px;font-weight:800;vertical-align:middle;font-family:'Manrope',sans-serif}
+</style>
+<script id="pos-local">
+/* Jenis kata (noun, verb, adjective, ...) selalu tampil: kamus bawaan (offline) -> cache/online -> tebakan akhiran */
+(function(){
+  const LOCAL={abandon:"v",abstruse:"a",accept:"v",accident:"n",achievement:"n",acquiesce:"v",acquire:"v",acrimony:"n",adventure:"n",advice:"n",agenda:"n",agreement:"n",airport:"n",alacrity:"n",algorithm:"n",allergy:"n",alliance:"n",alternative:"n|a",ambassador:"n",ambiguity:"n",ambitious:"a",anachronism:"n",ancient:"a",animosity:"n",anxiety:"n",apartment:"n",apologize:"v",appetizer:"n",apple:"n",appliance:"n",appointment:"n",appreciate:"v",apprehensive:"a",approach:"n|v",approve:"v",arduous:"a",argue:"v",argument:"n",arrange:"v",arrival:"n",arrive:"v",articulate:"a|v",assiduous:"a",assignment:"n",assist:"v",astute:"a",atmosphere:"n",attached:"a",audience:"n",austere:"a",automation:"n",available:"a",bad:"a",bag:"n",balance:"n|v",banana:"n",bandwidth:"n",battery:"n",behaviour:"n",bellicose:"a",belligerent:"a",benefit:"n|v",beverage:"n",big:"a",bird:"n",black:"a",blatant:"a",blue:"a",bolster:"v",book:"n|v",borrow:"v",boy:"n",brave:"a",bread:"n",break:"v|n",breakfast:"n",breeze:"n",bridge:"n",brother:"n",bucolic:"a",budget:"n",buy:"v",cacophony:"n",campaign:"n",campus:"n",cancel:"v",candid:"a",capacity:"n",capitulate:"v",capricious:"a",car:"n",career:"n",cat:"n",cautious:"a",celebrate:"v",century:"n",ceremony:"n",chair:"n",challenge:"n|v",cheap:"a",chicken:"n",chronic:"a",circumlocution:"n",circumstance:"n",circumvent:"v",citizen:"n",city:"n",clandestine:"a",clarify:"v",classmate:"n",climate:"n",clinic:"n",close:"v|a",coffee:"n",cogent:"a",coherent:"a",cold:"a",colleague:"n",come:"v",commensurate:"a",community:"n",competition:"n",complacent:"a",component:"n",concern:"n|v",conclusion:"n",condone:"v",confidence:"n",confident:"a",confirm:"v",conflict:"n|v",connotation:"n",consensus:"n",consequence:"n",conservation:"n",consider:"v",conspicuous:"a",contentious:"a",contract:"n|v",convenient:"a",cooperation:"n",corner:"n",courtesy:"n",creative:"a",criterion:"n",crowded:"a",crucial:"a",cruel:"a",cuisine:"n",culture:"n",cumbersome:"a",curious:"a",currency:"n",curriculum:"n",customer:"n",cybersecurity:"n",cynical:"a",dangerous:"a",database:"n",day:"n",deadline:"n",debilitate:"v",debugging:"n",decision:"n",decline:"v|n",deference:"n",delay:"n|v",delicious:"a",democracy:"n",denigrate:"v",departure:"n",dessert:"n",desultory:"a",detail:"n",device:"n",diagnosis:"n",dichotomy:"n",didactic:"a",diligent:"a",dinner:"n",diplomat:"n",direction:"n",disadvantage:"n",discipline:"n",discretion:"n",disparage:"v",disparate:"a",dissent:"n|v",distraction:"n",dog:"n",door:"n",download:"v|n",drink:"v|n",drought:"n",eat:"v",ebullience:"n",ecosystem:"n",efficacious:"a",efficient:"a",egg:"n",egregious:"a",election:"n",elusive:"a",emerge:"v",emergency:"n",emotion:"n",employee:"n",encourage:"v",encryption:"n",enervate:"v",enhance:"v",enigma:"n",enormous:"a",ensure:"v",enthusiasm:"n",environment:"n",ephemeral:"a",equality:"n",equipment:"n",equivocal:"a",error:"n",esoteric:"a",evaluate:"v",evidence:"n",exam:"n",excitement:"n",exercise:"n|v",exhaustive:"a",exhibition:"n",expense:"n",experience:"n|v",eye:"n",faculty:"n",family:"n",father:"n",favor:"n|v",feature:"n|v",fecund:"a",feedback:"n",festival:"n",fish:"n",flavor:"n",flexible:"a",flower:"n",focus:"n|v",food:"n",forget:"v",forgive:"v",freedom:"n",friend:"n",frugal:"a",frustration:"n",fuel:"n",furniture:"n",garrulous:"a",generation:"n",generous:"a",gentle:"a",girl:"n",go:"v",goal:"n",good:"a",government:"n",graduate:"n|v",grateful:"a",gratitude:"n",green:"a",greetings:"n",habit:"n",habitat:"n",hand:"n",happy:"a",harvest:"n|v",head:"n",heritage:"n",highway:"n",holiday:"n",honest:"a",honor:"n|v",hospital:"n",hot:"a",house:"n",household:"n",humble:"a",iconoclast:"n",idiosyncratic:"a",illness:"n",immune:"a",improve:"v",inchoate:"a",inconvenience:"n",ineffable:"a",infection:"n",influence:"n|v",ingredient:"n",innovative:"a",instrument:"n",interface:"n",intersection:"n",interview:"n|v",investment:"n",invitation:"n",invoice:"n",jealousy:"n",journey:"n",justice:"n",justify:"v",kindly:"adv",kitchen:"n",laboratory:"n",laconic:"a",landlord:"n",landscape:"n",laugh:"v|n",leadership:"n",lecture:"n|v",lecturer:"n",leftover:"n",license:"n",listen:"v",loneliness:"n",lonely:"a",loyal:"a",luggage:"n",machine:"n",magnanimous:"a",maintenance:"n",marry:"v",masterpiece:"n",measure:"n|v",mechanic:"n",medicine:"n",meeting:"n",melody:"n",meticulous:"a",milk:"n",mistake:"n",modern:"a",money:"n",monument:"n",moon:"n",morning:"n",mortgage:"n",mother:"n",motivation:"n",mouth:"n",music:"n",negotiate:"v",negotiation:"n",neighbor:"n",neighborhood:"n",neighbour:"n",network:"n",new:"a",night:"n",nose:"n",notify:"v",nutrition:"n",obfuscate:"v",old:"a",open:"a|v",opinion:"n",opportunity:"n",optimistic:"a",parking:"n",passenger:"n",passport:"n",password:"n",patience:"n",pedestrian:"n",pen:"n",performance:"n",permission:"n",pernicious:"a",pharmacy:"n",phone:"n",please:"adv|v",pleasure:"n",policy:"n",polite:"a",pollution:"n",portion:"n",practice:"n|v",pragmatic:"a",preference:"n",prepare:"v",prescription:"n",presentation:"n",priority:"n",productivity:"n",progress:"n|v",project:"n|v",promotion:"n",property:"n",proposal:"n",prototype:"n",proud:"a",prudent:"a",qualification:"n",question:"n|v",quixotic:"a",rain:"n|v",read:"v",realistic:"a",recalcitrant:"a",receipt:"n",recipe:"n",recommend:"v",recovery:"n",recycle:"v",red:"a",reduce:"v",reflection:"n",refugee:"n",regards:"n",regret:"n|v",regulation:"n",rehearsal:"n",reliable:"a",relief:"n",reminder:"n",renewable:"a",renovation:"n",repair:"v|n",reply:"n|v",report:"n|v",represent:"v",request:"n|v",require:"v",research:"n|v",resolve:"v|n",respect:"n|v",rest:"n|v",resume:"v|n",revenue:"n",rhythm:"n",rice:"n",routine:"n",run:"v",safety:"n",salary:"n",sanction:"n|v",schedule:"n|v",scholarship:"n",school:"n",sculpture:"n",season:"n",sell:"v",semester:"n",serendipity:"n",server:"n",shoe:"n",shy:"a",signal:"n|v",sincerely:"adv",sister:"n",sit:"v",skeptical:"a",sleep:"v|n",small:"a",software:"n",solution:"n",sorry:"a",souvenir:"n",sovereignty:"n",speak:"v",species:"n",stand:"v|n",storage:"n",stranger:"n",strategy:"n",suggest:"v",summit:"n",sun:"n",sunrise:"n",sunset:"n",supermarket:"n",surgeon:"n",sustainable:"a",sycophant:"n",sympathy:"n",symptom:"n",table:"n",taciturn:"a",tea:"n",teacher:"n",teamwork:"n",technician:"n",tenant:"n",thanks:"int|n",theater:"n",therapy:"n",thunder:"n",ticket:"n",tomorrow:"adv|n",tool:"n",tradition:"n",traffic:"n",treatment:"n",treaty:"n",tree:"n",truth:"n",tuition:"n",ubiquitous:"a",understand:"v",unfortunately:"adv",update:"n|v",upload:"v|n",usually:"adv",utensil:"n",vaccine:"n",vegetable:"n",vehicle:"n",village:"n",vindicate:"v",walk:"v|n",water:"n|v",weather:"n",week:"n",welcome:"int|a",wellness:"n",whisper:"v|n",white:"a",wilderness:"n",window:"n",work:"n|v",worry:"v|n",write:"v",year:"n",zealous:"a",design:"n|v"};
+  const CODE={n:'noun',v:'verb',a:'adjective',adv:'adverb',int:'interjection'};
+  Object.assign(POS_ID,{phrase:'frasa / ungkapan'});
+  const SUF=[[/(tion|sion|ment|ness|ity|ship|ance|ence|ism|ist|hood|dom)$/,'noun'],[/(ous|ful|ive|less|able|ible|ical|ish)$/,'adjective'],[/ly$/,'adverb'],[/(ize|ise|ify)$/,'verb']];
+  function posList(w,online){
+    const k=String(w||'').trim().toLowerCase();
+    if(!k)return[];
+    if(/\s/.test(k))return['phrase'];
+    if(LOCAL[k])return LOCAL[k].split('|').map(c=>CODE[c]||c);
+    if(online&&online.length)return online.slice(0,3);
+    for(const[r,p]of SUF)if(r.test(k))return[p];
+    return[];
+  }
+  function chips(list){
+    return list.map(p=>`<span class="pc">${p}<i>${POS_ID[p]?'· '+POS_ID[p]:''}</i></span>`).join('');
+  }
+  window.posList=posList;
+  posInit=function(w){
+    const k=String(w||'').trim();if(!k)return'';
+    const cached=(_dict[k.toLowerCase()]||{}).pos;
+    const need=!/\s/.test(k)&&!LOCAL[k.toLowerCase()];
+    if(need&&/^[A-Za-z][A-Za-z'\-]*$/.test(k))setTimeout(()=>posFill(k),30);
+    return'<div class="pos-row" id="posRow" data-w="'+k.toLowerCase()+'">'+chips(posList(k,cached))+'</div>';
+  };
+  posFill=async function(w){
+    const el=document.getElementById('posRow');if(!el||el.dataset.w!==w.toLowerCase())return;
+    const d=await dictGet(w);
+    const el2=document.getElementById('posRow');if(!el2||el2.dataset.w!==w.toLowerCase())return;
+    const l=posList(w,d&&d.pos);
+    if(l.length)el2.innerHTML=chips(l);
+  };
+  // lencana kecil di Daftar vocab, Riwayat, dan daftar bank
+  function decorate(root){
+    (root||document).querySelectorAll('.w:not([data-pos])').forEach(el=>{
+      el.dataset.pos='1';
+      const t=(el.firstChild&&el.firstChild.nodeType===3?el.firstChild.nodeValue:el.textContent).trim();
+      const l=posList(t,(_dict[t.toLowerCase()]||{}).pos);
+      if(l.length){const s=document.createElement('span');s.className='pos-tag';s.textContent=l.slice(0,2).join(' / ');el.appendChild(s)}
+    });
+  }
+  const c=document.getElementById('content');
+  if(c){new MutationObserver(()=>decorate(c)).observe(c,{childList:true,subtree:true});decorate(c)}
+})();
+</script>
 </body>
 </html>
