@@ -369,6 +369,7 @@ body.theme-midnight .hero::after{background-image:url("data:image/svg+xml,%3Csvg
       <button id="c-auto-kata" class="mode-card" onclick="pick('otomatis','kata')"><b> Otomatis • Kata</b><span class="desc">Latihan kosakata otomatis, 4 kata per hari (20 per minggu)</span></button>
       <button id="c-auto-kalimat" class="mode-card" onclick="pick('otomatis','kalimat')"><b> Otomatis • Kalimat</b><span class="desc">Belajar dalam konteks kalimat sehari-hari, 4 per hari</span></button>
       <button id="c-auto-toolkit" class="mode-card" onclick="pick('otomatis','toolkit')"><b> Otomatis • Toolkit</b><span class="desc">Kata &amp; ekspresi kampus, teknik, dan aktivitas harian</span></button>
+      <button id="c-auto-slang" class="mode-card" onclick="pick('otomatis','slang')"><b> Otomatis • Slang</b><span class="desc">Kalimat slang & bahasa gaul sehari-hari, 4 per hari</span></button>
       <button class="primary" onclick="goDash()" style="width:100%;margin-top:6px">Mulai belajar</button>
     </div>
   </div>
@@ -439,7 +440,6 @@ setTimeout(()=>{ if(!localStorage.getItem('vocab_onboarded')){ const ob=document
 
 // === Reminder notifikasi (selagi app kebuka di tab) ===
 let notifOn = localStorage.getItem('vocab_notif')==='1';
-function renderReminderBtn(){ const b=document.getElementById('btnReminder'); if(b) b.innerText = notifOn ? '🔔 Reminder: On' : '🔔 Reminder: Off'; }
 function toggleReminder(){
   if(!('Notification' in window)){ showM('Gak Didukung','Browser ini gak support notifikasi'); return; }
   if(!notifOn){
@@ -462,7 +462,7 @@ function checkNotifyDue(){
 }
 setInterval(checkNotifyDue, 60*60*1000); // cek tiap 1 jam selama app kebuka
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') checkNotifyDue(); });
-renderReminderBtn();
+
 const themeMap={sky:'',sunset:'theme-sunset',forest:'theme-forest',midnight:'theme-midnight'};
 function setTheme(name){
   document.body.className=document.body.className.replace(/theme-\w+/g,'').trim();
@@ -655,7 +655,7 @@ async function speak(t){
 }
 function autoV(){let it=words[idx];if(!it)return;speak(it.word);let f=document.getElementById('vf');if(f)f.innerText=`🌤️ Auto: ${it.word} (${vD+1}/${rV})`}
 const appEl=document.getElementById('app');function enterFocus(){appEl.classList.add('in-learning')}function exit(){stopMic();appEl.classList.remove('in-learning');cur="";upd()}
-function pick(m,t){mode=m;if(t)autoType=t;document.getElementById('c-manual').classList.toggle('selected',m==='manual');document.getElementById('c-auto-kata').classList.toggle('selected',m==='otomatis'&&autoType==='kata');document.getElementById('c-auto-kalimat').classList.toggle('selected',m==='otomatis'&&autoType==='kalimat');document.getElementById('c-auto-toolkit').classList.toggle('selected',m==='otomatis'&&autoType==='toolkit');}
+function pick(m,t){mode=m;if(t)autoType=t;document.getElementById('c-manual').classList.toggle('selected',m==='manual');document.getElementById('c-auto-kata').classList.toggle('selected',m==='otomatis'&&autoType==='kata');document.getElementById('c-auto-kalimat').classList.toggle('selected',m==='otomatis'&&autoType==='kalimat');document.getElementById('c-auto-toolkit').classList.toggle('selected',m==='otomatis'&&autoType==='toolkit');document.getElementById('c-auto-slang').classList.toggle('selected',m==='otomatis'&&autoType==='slang');}
 function goDash(){document.getElementById('step0').style.display='none';document.getElementById('menuCard').style.display='block';document.getElementById('modeLabel').innerText=mode + (mode==='otomatis'?' '+autoType+' • Minggu '+((prog.week||0)+1)+' • 4/hari':' • kamu isi vocab sendiri');if(mode==='otomatis'){const src=weekSet(autoType,prog.week||0),w0=(vocab["Day 1"][0]||{}).word;const known=['Accurate'];for(const t of ['kata','kalimat'])for(let k=0;k<3;k++)known.push(weekSet(t,k)["Day 1"][0].word);if(!w0||known.includes(w0)){if(w0!==src["Day 1"][0].word){vocab=JSON.parse(JSON.stringify(src));save();}}}upd();}
 function backToStep(){document.getElementById('menuCard').style.display='none';document.getElementById('step0').style.display='block';}
 function showForum(){enterFocus();openF="Day 1";renderF()}function tog(d){openF=openF===d?null:d;renderF()}
@@ -798,7 +798,96 @@ const poolWord=[["Greetings","Salam / Sapaan","gree-tingz"],["Pleasure","Kesenan
 const poolPhrase=[["How are you","Apa kabar","hau ahr yoo"],["Have a nice day","Semoga harimu menyenangkan","hav uh nahys dey"],["See you later","Sampai jumpa nanti","see yoo ley-ter"],["Take care","Jaga diri baik-baik","teyk kair"],["After you","Silakan duluan","af-ter yoo"],["Go ahead","Silakan / Lanjutkan","goh uh-hed"],["Feel free to ask","Jangan ragu bertanya","feel free too ask"],["Help yourself","Silakan ambil sendiri","help yor-self"],["Sorry to bother you","Maaf mengganggu","sor-ee too both-er yoo"],["Sorry for the delay","Maaf atas keterlambatan","sor-ee fawr thuh di-ley"],["My apologies","Mohon maaf","mahy uh-pol-uh-jeez"],["It is my pleasure","Dengan senang hati","it iz mahy plezh-er"],["Good morning everyone","Selamat pagi semuanya","good mawr-ning ev-ree-wuhn"],["Thank you for coming","Terima kasih sudah datang","thangk yoo fawr kuhm-ing"],["Please take a seat","Silakan duduk","pleez teyk uh seet"],["Could I have your name","Boleh tahu nama Anda","kood ahy hav yoor neym"],["How can I help you","Ada yang bisa saya bantu","hau kan ahy help yoo"],["Just a moment please","Mohon tunggu sebentar","juhst uh moh-muhnt pleez"],["Let me check","Biar saya cek dulu","let mee chek"],["I will be right back","Saya segera kembali","ahy wil bee rahyt bak"],
 ["Dear Sir or Madam","Yth. Bapak atau Ibu","deer sur awr mad-uhm"],["I hope you are well","Semoga Anda sehat selalu","ahy hohp yoo ahr wel"],["I am writing to inform you","Saya menulis untuk memberitahukan","ahy am rahy-ting too in-fawrm yoo"],["Thank you for your reply","Terima kasih atas balasan Anda","thangk yoo fawr yoor ri-plahy"],["Could we schedule a meeting","Bisakah kita jadwalkan rapat","kood wee skej-ool uh mee-ting"],["I am available on Monday","Saya tersedia hari Senin","ahy am uh-veyl-uh-buhl on muhn-dey"],["Please confirm your attendance","Mohon konfirmasi kehadiran Anda","pleez kuhn-furm yoor uh-ten-duhns"],["I look forward to hearing from you","Saya menantikan kabar Anda","ahy look fawr-werd too heer-ing fruhm yoo"],["Thank you for your patience","Terima kasih atas kesabaran Anda","thangk yoo fawr yoor pey-shuhns"],["We appreciate your feedback","Kami menghargai masukan Anda","wee uh-pree-shee-eyt yoor feed-bak"],["I will get back to you","Saya akan menghubungi Anda kembali","ahy wil get bak too yoo"],["Do not hesitate to contact me","Jangan ragu menghubungi saya","doo not hez-i-teyt too kon-takt mee"],["I agree with your point","Saya setuju dengan pendapat Anda","ahy uh-gree with yoor poynt"],["That is a good idea","Itu ide yang bagus","that iz uh good ahy-dee-uh"],["I see your point","Saya mengerti maksud Anda","ahy see yoor poynt"],["May I suggest something","Bolehkah saya menyarankan sesuatu","mey ahy suhg-jest suhm-thing"],["I am sorry but I cannot make it","Maaf, saya tidak bisa hadir","ahy am sor-ee buht ahy kan-not meyk it"],["Thank you for understanding","Terima kasih atas pengertiannya","thangk yoo fawr uhn-der-stan-ding"],["Please accept my apologies","Mohon terima permintaan maaf saya","pleez ak-sept mahy uh-pol-uh-jeez"],["Have a great weekend","Selamat berakhir pekan","hav uh greyt week-end"]];
 const TOOLKIT_WEEKS=[{"Day 1": [{"word": "presentation", "meaning": "Presentasi", "reading": "prez-en-tey-shuhn", "tag": "Campus", "ex": "I have a presentation tomorrow.", "exId": "Saya ada presentasi besok."}, {"word": "lecturer", "meaning": "Dosen / Pengajar", "reading": "lek-cher-er", "tag": "Campus", "ex": "The lecturer explains the topic.", "exId": "Dosen menjelaskan topiknya."}, {"word": "assignment", "meaning": "Tugas", "reading": "uh-sahyn-muhnt", "tag": "Campus", "ex": "The assignment is due on Friday.", "exId": "Tugasnya dikumpulkan hari Jumat."}, {"word": "question", "meaning": "Pertanyaan", "reading": "kwes-chuhn", "tag": "Campus", "ex": "I have a question.", "exId": "Saya punya pertanyaan."}], "Day 2": [{"word": "What does this mean", "meaning": "Apa arti ini?", "reading": "wuht duz this meen", "tag": "Asking", "ex": "Asking: dipakai saat tidak paham sebuah kata.", "exId": ""}, {"word": "Could you repeat that", "meaning": "Bisa diulang?", "reading": "kood yoo ri-peet that", "tag": "Asking", "ex": "Asking: dipakai saat tidak dengar jelas.", "exId": ""}, {"word": "I understand", "meaning": "Saya paham", "reading": "ahy uhn-der-stand", "tag": "Responding", "ex": "Responding: jawaban saat sudah mengerti.", "exId": ""}, {"word": "I am not sure", "meaning": "Saya kurang yakin", "reading": "ahy am not shoor", "tag": "Responding", "ex": "Responding: jawaban saat ragu.", "exId": ""}], "Day 3": [{"word": "machine", "meaning": "Mesin", "reading": "muh-sheen", "tag": "Tech", "ex": "The machine is very old.", "exId": "Mesinnya sudah sangat tua."}, {"word": "tool", "meaning": "Alat", "reading": "tool", "tag": "Tech", "ex": "I need the right tool.", "exId": "Saya butuh alat yang tepat."}, {"word": "design", "meaning": "Desain / Merancang", "reading": "di-zahyn", "tag": "Tech", "ex": "This is my design.", "exId": "Ini desain saya."}, {"word": "software", "meaning": "Perangkat lunak", "reading": "sawft-wair", "tag": "Tech", "ex": "I install the software.", "exId": "Saya memasang perangkat lunaknya."}], "Day 4": [{"word": "project", "meaning": "Proyek", "reading": "proj-ekt", "tag": "Tech", "ex": "Our project starts today.", "exId": "Proyek kami mulai hari ini."}, {"word": "technician", "meaning": "Teknisi", "reading": "tek-nish-uhn", "tag": "Tech", "ex": "The technician fixes the machine.", "exId": "Teknisi memperbaiki mesinnya."}, {"word": "Could you explain it again", "meaning": "Bisa jelaskan lagi?", "reading": "kood yoo ik-splayn it uh-gen", "tag": "Clarifying", "ex": "Clarifying: dipakai saat penjelasan belum jelas.", "exId": ""}, {"word": "I need to finish my assignment", "meaning": "Saya perlu menyelesaikan tugas saya", "reading": "ahy need too fin-ish mahy uh-sahyn-muhnt", "tag": "Functional unit", "ex": "Satu unit fungsional, bukan cuma kata tunggal.", "exId": ""}], "Day 5": [{"word": "practice", "meaning": "Latihan / Berlatih", "reading": "prak-tis", "tag": "Daily", "ex": "I practice every day.", "exId": "Saya berlatih setiap hari."}, {"word": "work", "meaning": "Kerja / Pekerjaan", "reading": "wurk", "tag": "Daily", "ex": "I work in a workshop.", "exId": "Saya bekerja di bengkel."}, {"word": "sleep", "meaning": "Tidur", "reading": "sleep", "tag": "Daily", "ex": "I sleep at ten.", "exId": "Saya tidur jam sepuluh."}, {"word": "I need to practice more", "meaning": "Saya perlu lebih banyak berlatih", "reading": "ahy need too prak-tis mor", "tag": "Functional unit", "ex": "Dipakai untuk menyatakan kebutuhan.", "exId": ""}]}, {"Day 1": [{"word": "schedule", "meaning": "Jadwal", "reading": "skej-ool", "tag": "Campus", "ex": "What is the schedule today?", "exId": "Apa jadwal hari ini?"}, {"word": "exam", "meaning": "Ujian", "reading": "ig-zam", "tag": "Campus", "ex": "The exam is next week.", "exId": "Ujiannya minggu depan."}, {"word": "deadline", "meaning": "Tenggat waktu", "reading": "ded-lahyn", "tag": "Campus", "ex": "The deadline is tomorrow.", "exId": "Tenggatnya besok."}, {"word": "classmate", "meaning": "Teman sekelas", "reading": "klas-meyt", "tag": "Campus", "ex": "My classmate helps me.", "exId": "Teman sekelas membantu saya."}], "Day 2": [{"word": "Could you speak more slowly", "meaning": "Bisa bicara lebih pelan?", "reading": "kood yoo speek mor sloh-lee", "tag": "Asking", "ex": "Asking: saat lawan bicara terlalu cepat.", "exId": ""}, {"word": "Can I ask a question", "meaning": "Boleh saya bertanya?", "reading": "kan ahy ask uh kwes-chuhn", "tag": "Asking", "ex": "Asking: membuka pertanyaan dengan sopan.", "exId": ""}, {"word": "I did not catch that", "meaning": "Saya tidak menangkap itu", "reading": "ahy did not kach that", "tag": "Responding", "ex": "Responding: saat tidak dengar atau tidak ikut.", "exId": ""}, {"word": "Could you give me an example", "meaning": "Bisa beri saya contoh?", "reading": "kood yoo giv mee an ig-zam-puhl", "tag": "Clarifying", "ex": "Clarifying: minta contoh agar jelas.", "exId": ""}], "Day 3": [{"word": "equipment", "meaning": "Peralatan", "reading": "ih-kwip-muhnt", "tag": "Tech", "ex": "We check the equipment.", "exId": "Kami memeriksa peralatan."}, {"word": "safety", "meaning": "Keselamatan", "reading": "seyf-tee", "tag": "Tech", "ex": "Safety comes first.", "exId": "Keselamatan nomor satu."}, {"word": "measure", "meaning": "Mengukur", "reading": "mezh-er", "tag": "Tech", "ex": "I measure the length.", "exId": "Saya mengukur panjangnya."}, {"word": "repair", "meaning": "Memperbaiki", "reading": "ri-pair", "tag": "Tech", "ex": "He can repair the machine.", "exId": "Dia bisa memperbaiki mesinnya."}], "Day 4": [{"word": "How does this machine work", "meaning": "Bagaimana mesin ini bekerja?", "reading": "hau duz this muh-sheen wurk", "tag": "Asking", "ex": "Asking: bertanya cara kerja alat.", "exId": ""}, {"word": "Which tool should I use", "meaning": "Alat mana yang harus saya pakai?", "reading": "which tool shood ahy yooz", "tag": "Asking", "ex": "Asking: memilih alat yang tepat.", "exId": ""}, {"word": "I need to check the software", "meaning": "Saya perlu memeriksa perangkat lunaknya", "reading": "ahy need too chek thuh sawft-wair", "tag": "Functional unit", "ex": "Satu unit fungsional untuk pekerjaan teknis.", "exId": ""}, {"word": "Where is the technician", "meaning": "Di mana teknisinya?", "reading": "wair iz thuh tek-nish-uhn", "tag": "Asking", "ex": "Asking: mencari orang yang tepat.", "exId": ""}], "Day 5": [{"word": "routine", "meaning": "Rutinitas", "reading": "roo-teen", "tag": "Daily", "ex": "My routine is simple.", "exId": "Rutinitas saya sederhana."}, {"word": "habit", "meaning": "Kebiasaan", "reading": "hab-it", "tag": "Daily", "ex": "Practice is a good habit.", "exId": "Berlatih adalah kebiasaan baik."}, {"word": "rest", "meaning": "Istirahat", "reading": "rest", "tag": "Daily", "ex": "I need to rest.", "exId": "Saya perlu istirahat."}, {"word": "I need to get some sleep", "meaning": "Saya perlu tidur", "reading": "ahy need too get suhm sleep", "tag": "Functional unit", "ex": "Dipakai untuk menyatakan kebutuhan.", "exId": ""}]}, {"Day 1": [{"word": "report", "meaning": "Laporan", "reading": "ri-port", "tag": "Campus", "ex": "I write a report.", "exId": "Saya menulis laporan."}, {"word": "laboratory", "meaning": "Laboratorium", "reading": "lab-ruh-tor-ee", "tag": "Campus", "ex": "We work in the laboratory.", "exId": "Kami bekerja di laboratorium."}, {"word": "research", "meaning": "Penelitian", "reading": "ree-surch", "tag": "Campus", "ex": "Her research is interesting.", "exId": "Penelitiannya menarik."}, {"word": "feedback", "meaning": "Masukan", "reading": "feed-bak", "tag": "Campus", "ex": "Thank you for the feedback.", "exId": "Terima kasih atas masukannya."}], "Day 2": [{"word": "Could you check my work", "meaning": "Bisa periksa pekerjaan saya?", "reading": "kood yoo chek mahy wurk", "tag": "Asking", "ex": "Asking: minta dicek.", "exId": ""}, {"word": "I need more time", "meaning": "Saya butuh waktu lebih", "reading": "ahy need mor tahym", "tag": "Responding", "ex": "Responding: saat belum selesai.", "exId": ""}, {"word": "I am sorry I am late", "meaning": "Maaf saya terlambat", "reading": "ahy am sor-ee ahy am leyt", "tag": "Responding", "ex": "Responding: permintaan maaf singkat.", "exId": ""}, {"word": "Thank you for your help", "meaning": "Terima kasih atas bantuan Anda", "reading": "thangk yoo fawr yoor help", "tag": "Responding", "ex": "Responding: menutup percakapan dengan sopan.", "exId": ""}], "Day 3": [{"word": "device", "meaning": "Perangkat", "reading": "di-vahys", "tag": "Tech", "ex": "This device is new.", "exId": "Perangkat ini baru."}, {"word": "error", "meaning": "Kesalahan / Galat", "reading": "er-er", "tag": "Tech", "ex": "The software shows an error.", "exId": "Perangkat lunaknya menampilkan galat."}, {"word": "maintenance", "meaning": "Perawatan", "reading": "meyn-tuh-nuhns", "tag": "Tech", "ex": "Maintenance is important.", "exId": "Perawatan itu penting."}, {"word": "component", "meaning": "Komponen", "reading": "kuhm-poh-nuhnt", "tag": "Tech", "ex": "Check each component.", "exId": "Periksa tiap komponen."}], "Day 4": [{"word": "The machine is not working", "meaning": "Mesinnya tidak berfungsi", "reading": "thuh muh-sheen iz not wur-king", "tag": "Functional unit", "ex": "Melapor masalah ke teknisi.", "exId": ""}, {"word": "I will fix the error", "meaning": "Saya akan memperbaiki galatnya", "reading": "ahy wil fiks thee er-er", "tag": "Functional unit", "ex": "Menyatakan tindakan.", "exId": ""}, {"word": "Please follow the safety rules", "meaning": "Mohon ikuti aturan keselamatan", "reading": "pleez fol-oh thuh seyf-tee roolz", "tag": "Functional unit", "ex": "Instruksi umum di bengkel.", "exId": ""}, {"word": "The project is almost done", "meaning": "Proyeknya hampir selesai", "reading": "thuh proj-ekt iz awl-mohst duhn", "tag": "Functional unit", "ex": "Melaporkan progres.", "exId": ""}], "Day 5": [{"word": "break", "meaning": "Istirahat / Jeda", "reading": "breyk", "tag": "Daily", "ex": "Let us take a break.", "exId": "Ayo kita istirahat."}, {"word": "exercise", "meaning": "Olahraga", "reading": "ek-ser-sahyz", "tag": "Daily", "ex": "I exercise every morning.", "exId": "Saya olahraga tiap pagi."}, {"word": "I go to work by bus", "meaning": "Saya berangkat kerja naik bus", "reading": "ahy goh too wurk bahy buhs", "tag": "Functional unit", "ex": "Satu unit fungsional aktivitas harian.", "exId": ""}, {"word": "I sleep at ten", "meaning": "Saya tidur jam sepuluh", "reading": "ahy sleep at ten", "tag": "Functional unit", "ex": "Satu unit fungsional aktivitas harian.", "exId": ""}]}];
-const weekSet=(t,w)=>{if(t==='toolkit')return JSON.parse(JSON.stringify(TOOLKIT_WEEKS[w%TOOLKIT_WEEKS.length]));const k=w%3;if(k===0)return t==='kalimat'?defPhrase:defWord;const pool=t==='kalimat'?poolPhrase:poolWord,o={};for(let d=0;d<5;d++){const a=(k-1)*20+d*4;o['Day '+(d+1)]=pool.slice(a,a+4).map(x=>({word:x[0],meaning:x[1],reading:x[2]}))}return o};
+/* Kalimat slang: kata|arti|ejaan|kategori|contoh|arti contoh. 80 kalimat = 4 minggu (20/minggu, 4/hari). */
+const SLANG_ROWS=`
+No cap|Serius, nggak bohong|noh kap|Reaksi|I passed the exam, no cap.|Aku lulus ujian, serius nggak bohong.
+That is lit|Keren banget, seru parah|that iz lit|Pujian|The party last night was lit.|Pesta semalam seru banget.
+I am down|Aku ikut, aku mau|ai am daun|Ajakan|Movie tonight? I am down.|Nonton malam ini? Aku ikut.
+Bet I am in|Oke, aku ikut|bet ai am in|Respon|Dinner at eight? Bet I am in.|Makan malam jam delapan? Oke, aku ikut.
+Say less|Nggak usah dijelasin, aku paham|sey les|Respon|You need a ride? Say less.|Butuh tumpangan? Siap, nggak usah dijelasin.
+I am dead|Ngakak parah|ai am ded|Reaksi|Look at his face, I am dead.|Lihat mukanya, aku ngakak parah.
+That is fire|Keren abis|that iz fai-er|Pujian|Your new song is fire.|Lagu barumu keren abis.
+That slaps|Enak banget, mantap (musik atau makanan)|that slaps|Pujian|This beat slaps.|Beat ini mantap banget.
+It is giving main character|Auranya kayak tokoh utama|it iz giv-ing meyn kar-ik-ter|Gaul|Nice jacket, it is giving main character.|Jaketnya bagus, auranya kayak tokoh utama.
+You ate that|Kamu keren banget, sempurna|yoo eyt that|Pujian|Your speech today? You ate that.|Pidatomu hari ini? Sempurna banget.
+I cannot even|Aku nggak sanggup lagi (saking lucu atau kesel)|ai kan-not ee-ven|Reaksi|He did what? I cannot even.|Dia ngapain? Aku nggak sanggup lagi.
+Big yikes|Aduh, ngeri atau memalukan|big yaiks|Reaksi|He texted his boss by mistake. Big yikes.|Dia salah kirim chat ke bosnya. Aduh, malu banget.
+That is sus|Mencurigakan|that iz sus|Reaksi|He left without a word. That is sus.|Dia pergi tanpa bilang apa-apa. Mencurigakan.
+Same here|Sama, aku juga|seym hir|Respon|I am so tired. Same here.|Aku capek banget. Sama, aku juga.
+That is such a mood|Aku banget, relate banget|that iz such uh mood|Respon|Sleeping all weekend? That is such a mood.|Tidur seharian pas weekend? Aku banget.
+Fair enough|Ya masuk akal, oke|fair i-nuf|Respon|You want to stay home? Fair enough.|Kamu mau di rumah aja? Ya masuk akal.
+No worries|Santai aja, nggak masalah|noh wuh-reez|Respon|Sorry I am late. No worries.|Maaf aku telat. Santai aja.
+For real|Serius? Beneran?|for reel|Reaksi|We won the prize? For real?|Kita menang hadiahnya? Beneran?
+Get out of here|Masa sih, yang bener aja|get aut uv hir|Reaksi|You met him? Get out of here.|Kamu ketemu dia? Masa sih.
+That hits different|Terasa beda dan lebih ngena|that hits dif-er-ent|Pujian|Rain and old songs hit different.|Hujan dan lagu lama itu ngenanya beda.
+Let us bounce|Yuk cabut|let uhs bauns|Ajakan|It is late. Let us bounce.|Udah malam. Yuk cabut.
+Hit me up|Kabarin aku, hubungi aku|hit mee up|Ajakan|Hit me up when you arrive.|Kabarin aku kalau udah sampai.
+I am swamped|Aku lagi sibuk banget|ai am swompt|Perasaan|Sorry, I am swamped this week.|Maaf, minggu ini aku sibuk banget.
+Count me in|Hitung aku ikut|kaunt mee in|Ajakan|Hiking on Sunday? Count me in.|Mendaki hari Minggu? Hitung aku ikut.
+I am beat|Capek banget|ai am beet|Perasaan|I worked all day. I am beat.|Aku kerja seharian. Capek banget.
+Spill the tea|Ceritain gosipnya|spil thuh tee|Obrolan|Come on, spill the tea.|Ayo dong, ceritain gosipnya.
+Do not trip|Santai aja, jangan panik|doo not trip|Obrolan|It is just a small mistake. Do not trip.|Cuma kesalahan kecil. Santai aja.
+Keep it real|Jujur apa adanya|keep it reel|Obrolan|Just keep it real with me.|Jujur aja sama aku.
+No big deal|Bukan masalah besar|noh big deel|Respon|You forgot? No big deal.|Kamu lupa? Bukan masalah besar.
+I owe you one|Aku utang budi sama kamu|ai oh yoo wun|Respon|Thanks for helping. I owe you one.|Makasih udah bantu. Aku utang budi.
+Long story short|Singkatnya|long stor-ee short|Obrolan|Long story short, we missed the bus.|Singkatnya, kita ketinggalan bus.
+Hang tight|Tunggu sebentar ya|hang tait|Obrolan|Hang tight, I will be right there.|Tunggu sebentar ya, aku segera datang.
+Heads up|Awas, info dulu nih|hedz up|Obrolan|Heads up, the class starts early.|Info dulu nih, kelasnya mulai lebih awal.
+Give me a sec|Tunggu sebentar|giv mee uh sek|Obrolan|Give me a sec, I am almost done.|Tunggu sebentar, aku hampir selesai.
+What is good|Apa kabar, gimana nih|wut iz gud|Sapaan|Hey man, what is good?|Hei bro, gimana nih?
+Long time no see|Lama nggak ketemu|long taim noh see|Sapaan|Long time no see, how have you been?|Lama nggak ketemu, kabarmu gimana?
+Let us grab a bite|Yuk makan|let uhs grab uh bait|Ajakan|Let us grab a bite after class.|Yuk makan setelah kelas.
+It is on me|Aku yang traktir|it iz on mee|Ajakan|Order anything, it is on me.|Pesan apa aja, aku yang traktir.
+Catch you later|Sampai ketemu lagi|kach yoo ley-ter|Sapaan|I have to go. Catch you later.|Aku harus pergi. Sampai ketemu lagi.
+Cut me some slack|Kasih aku keringanan|kut mee sum slak|Obrolan|I am new here. Cut me some slack.|Aku masih baru di sini. Kasih aku keringanan.
+I am so over it|Udah muak, udah nggak peduli|ai am soh oh-ver it|Perasaan|All this drama, I am so over it.|Semua drama ini, aku udah muak.
+I am toast|Aku tamat, celaka|ai am tohst|Perasaan|I forgot the report. I am toast.|Aku lupa laporannya. Aku tamat.
+That is a bummer|Sayang banget, bikin kecewa|that iz uh bum-er|Reaksi|The trip got cancelled. That is a bummer.|Perjalanannya dibatalkan. Sayang banget.
+I am stressed out|Stres banget|ai am strest aut|Perasaan|Exams are coming. I am stressed out.|Ujian udah dekat. Aku stres banget.
+I am hyped|Aku semangat banget|ai am haipt|Perasaan|The concert is tomorrow. I am hyped.|Konsernya besok. Aku semangat banget.
+I am shook|Aku kaget banget|ai am shuk|Perasaan|I saw the news. I am shook.|Aku lihat beritanya. Aku kaget banget.
+I am so done|Udah capek, udah nyerah|ai am soh dun|Perasaan|Another meeting? I am so done.|Rapat lagi? Aku udah capek.
+It is a whole mood|Suasananya relate banget|it iz uh hohl mood|Gaul|Cold coffee and rainy day, it is a whole mood.|Kopi dingin dan hari hujan, suasananya relate banget.
+I am in my feels|Lagi baper|ai am in mai feelz|Perasaan|That movie made me cry. I am in my feels.|Film itu bikin aku nangis. Aku lagi baper.
+Low key tired|Agak capek sebenarnya|loh kee taierd|Perasaan|I am low key tired today.|Sebenarnya aku agak capek hari ini.
+High key excited|Excited banget|hai kee ik-sai-tid|Perasaan|I am high key excited for the trip.|Aku excited banget buat perjalanannya.
+I am not feeling it|Lagi nggak mood|ai am not fee-ling it|Perasaan|Pizza again? I am not feeling it.|Pizza lagi? Aku lagi nggak mood.
+I am so pumped|Semangat membara|ai am soh pumpt|Perasaan|Game day! I am so pumped.|Hari pertandingan! Aku semangat membara.
+I am wiped out|Lemas banget|ai am waipt aut|Perasaan|After the run, I am wiped out.|Setelah lari, aku lemas banget.
+I am freaking out|Aku panik banget|ai am free-king aut|Perasaan|The test starts now. I am freaking out.|Tesnya mulai sekarang. Aku panik banget.
+It is not that deep|Nggak sedalam itu, santai aja|it iz not that deep|Obrolan|It was just a joke. It is not that deep.|Itu cuma bercanda. Nggak usah dipikir dalam.
+I am overthinking|Aku kebanyakan mikir|ai am oh-ver-thing-king|Perasaan|I know, I am overthinking.|Aku tahu, aku kebanyakan mikir.
+That is so random|Random banget|that iz soh ran-dum|Reaksi|He called me at midnight. That is so random.|Dia nelpon aku tengah malam. Random banget.
+I am blanking|Otakku blank|ai am blang-king|Perasaan|Wait, I am blanking on his name.|Bentar, otakku blank soal namanya.
+I am obsessed|Aku tergila-gila|ai am ob-sest|Perasaan|This show is so good. I am obsessed.|Serial ini bagus banget. Aku tergila-gila.
+You got this|Kamu pasti bisa|yoo got this|Dukungan|Good luck tomorrow. You got this.|Semoga sukses besok. Kamu pasti bisa.
+You nailed it|Kamu berhasil banget|yoo neyld it|Dukungan|That presentation? You nailed it.|Presentasi itu? Kamu berhasil banget.
+You are killing it|Kamu keren banget lakuinnya|yoo ar kil-ing it|Dukungan|Great work, you are killing it.|Kerja bagus, kamu keren banget.
+Break a leg|Semoga sukses|breyk uh leg|Dukungan|Break a leg on stage tonight.|Semoga sukses di panggung malam ini.
+Piece of cake|Gampang banget|pees uv keyk|Dukungan|The quiz was a piece of cake.|Kuisnya gampang banget.
+Whatever floats your boat|Terserah kamu, yang bikin kamu nyaman|wut-ev-er flohts yor boht|Obrolan|Tea or coffee? Whatever floats your boat.|Teh atau kopi? Terserah yang bikin kamu nyaman.
+Do not flex|Jangan pamer|doo not fleks|Obrolan|Nice car, but do not flex.|Mobil bagus, tapi jangan pamer.
+Stay humble|Tetap rendah hati|stey hum-bul|Dukungan|You won, but stay humble.|Kamu menang, tapi tetap rendah hati.
+Do not be a stranger|Jangan jadi orang asing, sering kabarin|doo not bee uh strein-jer|Sapaan|Come visit again. Do not be a stranger.|Main lagi ya. Sering kabarin.
+That is cap|Itu bohong|that iz kap|Reaksi|You ran ten miles? That is cap.|Kamu lari enam belas kilo? Itu bohong.
+She is a legend|Dia legenda|shee iz uh lej-und|Pujian|She fixed it in one minute. She is a legend.|Dia benerin dalam semenit. Dia legenda.
+He is the goat|Dia yang terbaik sepanjang masa|hee iz thuh goht|Pujian|Look at those stats. He is the goat.|Lihat statistiknya. Dia yang terbaik.
+Do not ghost me|Jangan ngilang gitu aja|doo not gohst mee|Obrolan|Text me back. Do not ghost me.|Balas chatku. Jangan ngilang gitu aja.
+They left me on read|Dia cuma baca chatku, nggak dibalas|thei left mee on red|Obrolan|I texted twice. They left me on read.|Aku chat dua kali. Dia cuma baca, nggak dibalas.
+I got ghosted|Aku ditinggal tanpa kabar|ai got goh-stid|Obrolan|He stopped replying. I got ghosted.|Dia berhenti balas. Aku ditinggal tanpa kabar.
+Slide into my DMs|Chat aku lewat DM aja|slaid in-too mai dee-emz|Gaul|Got questions? Slide into my DMs.|Ada pertanyaan? Chat aku lewat DM aja.
+Touch grass|Keluar rumah, lepas dari layar|tuch gras|Gaul|You are online all day. Go touch grass.|Kamu online seharian. Sana keluar rumah.
+Main character energy|Aura tokoh utama, percaya diri|meyn kar-ik-ter en-er-jee|Gaul|She walks in with main character energy.|Dia masuk dengan aura tokoh utama.
+Read the room|Peka sama suasana|red thuh room|Obrolan|Jokes now? Read the room.|Bercanda sekarang? Peka dong sama suasana.
+Let him cook|Biarkan dia berkarya dulu|let him kuk|Obrolan|Do not stop him. Let him cook.|Jangan dihentikan. Biarkan dia berkarya dulu.
+`;
+const SLANG_WEEKS=(()=>{
+  const r=SLANG_ROWS.trim().split('\n').map(l=>{const[word,meaning,reading,tag,ex,exId]=l.split('|').map(x=>x.trim());return{word,meaning,reading,tag,ex,exId}});
+  const weeks=[];
+  for(let w=0;w<r.length/20;w++){const o={};for(let d=0;d<5;d++)o['Day '+(d+1)]=r.slice(w*20+d*4,w*20+d*4+4);weeks.push(o)}
+  return weeks;
+})();
+const weekSet=(t,w)=>{if(t==='toolkit'||t==='slang'){const L=t==='slang'?SLANG_WEEKS:TOOLKIT_WEEKS;return JSON.parse(JSON.stringify(L[w%L.length]))}const k=w%3;if(k===0)return t==='kalimat'?defPhrase:defWord;const pool=t==='kalimat'?poolPhrase:poolWord,o={};for(let d=0;d<5;d++){const a=(k-1)*20+d*4;o['Day '+(d+1)]=pool.slice(a,a+4).map(x=>({word:x[0],meaning:x[1],reading:x[2]}))}return o};
 
 // === Generator kosa kata tanpa batas ===
 // Daftar besar kata/frasa mentah (belum ada arti). Artinya di-generate otomatis lewat translate API
@@ -815,7 +904,7 @@ async function translateWord(w){
   }catch{}
   return w; // translate gagal (mis. offline) -> tampilin kata aslinya biar gak nge-blank
 }
-async function buildFreshWeek(t){if(t==='toolkit')return weekSet(t,prog.week||0);
+async function buildFreshWeek(t){if(t==='toolkit'||t==='slang')return weekSet(t,prog.week||0);
   const known=new Set(Object.keys(bank)); // kata yang udah pernah dihafal, gak dipilih lagi
   const poolAll=t==='kalimat'?PHRASE_BANK:WORD_BANK;
   const fresh=poolAll.filter(w=>!known.has(w.toLowerCase()));
@@ -877,10 +966,10 @@ function showCloud(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(pop.classList.contains('active'))closeM();else document.getElementById('onboard').classList.remove('active')}});
 </script>
 <script>
-const ICO={grid:'<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',review:'<path d="M20 11a8 8 0 0 0-14-4L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4l2-2M20 20v-5h-5"/>',list:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',bell:'<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>',cloud:'<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 10a4 4 0 0 1-1 8z"/>',down:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',swap:'<path d="M4 8h14l-4-4M20 16H6l4 4"/>',flame:'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',check:'<path d="M5 12l5 5 9-10"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',cap:'<path d="M3 9l9-5 9 5-9 5zM7 11v5c3 2 7 2 10 0v-5"/>'};
+const ICO={grid:'<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',review:'<path d="M5 19.5V5.5A1.5 1.5 0 0 1 6.5 4H14M5 19.5A1.5 1.5 0 0 0 6.5 21H17a1 1 0 0 0 1-1v-5M5 19.5A1.5 1.5 0 0 1 6.5 18H18"/><path d="M17 3l.9 2.1L20 6l-2.1.9L17 9l-.9-2.1L14 6l2.1-.9zM10 9v5M7.5 11.5h5" stroke-width="1.7"/>',test:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M14 3l5 5v3M14 3v5h5M8 12h7M8 16h3"/><circle cx="17" cy="17" r="4" fill="#2f6fe4" stroke="none"/><path d="M15.2 17l1.3 1.3 2.3-2.5" stroke="#fff" stroke-width="1.6"/>',bellOff:'<path d="M6.5 10.5A5.5 5.5 0 0 1 12 6c1.4 0 2.6.5 3.6 1.3M17.8 12V17l2 2H8M10 21h4M3 3l18 18"/>',list:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',bell:'<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>',cloud:'<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 10a4 4 0 0 1-1 8z"/>',down:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',swap:'<path d="M4 8h14l-4-4M20 16H6l4 4"/>',flame:'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',check:'<path d="M5 12l5 5 9-10"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',cap:'<path d="M3 9l9-5 9 5-9 5zM7 11v5c3 2 7 2 10 0v-5"/>'};
 const svg=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${ICO[n]}</svg>`;
 document.querySelectorAll('i.ic').forEach(e=>e.innerHTML=svg(e.dataset.i));
-function renderReminderBtn(){const b=document.getElementById('btnReminder');if(b)b.innerHTML=`<i class="ic">${svg('bell')}</i>Pengingat<span class="state">${notifOn?'Aktif':'Mati'}</span>`}
+function renderReminderBtn(){const b=document.getElementById('btnReminder');if(b)b.innerHTML=`<i class="ic">${svg(notifOn?'bell':'bellOff')}</i><span class="fl">Pengingat<span class="state">${notifOn?'Aktif':'Mati'}</span></span>`}
 function upd(){
   const total=Object.values(vocab).reduce((a,d)=>a+d.length,0)||20,ws=prog.weekStart||0,done=history.filter(h=>(h.ts||0)>=ws).length,pct=Math.min(100,Math.round(done/total*100));
   document.getElementById('masteryFill').style.width=pct+'%';document.getElementById('masteryText').innerText=`${done}/${total} kata`;
@@ -908,7 +997,7 @@ const lvBadge=l=>l?`<span class="lv lv-${l[0]}">${l}</span>`:'';
 function renderLvl(){document.getElementById('lvlChips').innerHTML=['all',...CEFR_LV].map(l=>`<button class="chip${LVL===l?' on':''}" onclick="setLevel('${l}')">${l==='all'?'Campur':l}</button>`).join('');document.getElementById('lvlName').innerText=LVL==='all'?'Campur':LVL}
 async function setLevel(l){LVL=l;localStorage.setItem('sky_level',l);renderLvl();const fresh=mode==='otomatis'&&prog.unlockedDay===1&&!history.some(h=>(h.ts||0)>=(prog.weekStart||0));const nm=l==='all'?'Campur':l;
  if(fresh){vocab=await buildFreshWeek(autoType);save();upd();showM('Level '+nm,'Isi minggu ini diganti sesuai levelmu')}else showM('Level '+nm,mode==='otomatis'?'Berlaku mulai minggu depan, karena minggu ini sudah jalan':'Dipakai untuk label kata dan pilihan kata otomatis')}
-async function buildFreshWeek(t){if(t==='toolkit')return weekSet(t,prog.week||0);const known=new Set(Object.keys(bank));const poolAll=t==='kalimat'?(LVL!=='all'&&CEFR_S[LVL]?CEFR_S[LVL]:PHRASE_BANK):(LVL!=='all'&&CEFR[LVL]?CEFR[LVL]:WORD_BANK);const fresh=poolAll.filter(w=>!known.has(w.toLowerCase()));
+async function buildFreshWeek(t){if(t==='toolkit'||t==='slang')return weekSet(t,prog.week||0);const known=new Set(Object.keys(bank));const poolAll=t==='kalimat'?(LVL!=='all'&&CEFR_S[LVL]?CEFR_S[LVL]:PHRASE_BANK):(LVL!=='all'&&CEFR[LVL]?CEFR[LVL]:WORD_BANK);const fresh=poolAll.filter(w=>!known.has(w.toLowerCase()));
  if(fresh.length<20)return weekSet(t,prog.week||0);const chosen=fresh.slice(0,20),out={};
  for(let d=0;d<5;d++){const dw=chosen.slice(d*4,d*4+4);out['Day '+(d+1)]=await Promise.all(dw.map(async w=>({word:w,meaning:await translateWord(w),reading:instantReading(w),level:lvlOf(w)})))}return out}
 const _showW=showW;showW=function(){_showW();const l=words[idx]&&lvlOf(words[idx].word),v=document.querySelector('#card .vlabel');if(l&&v)v.innerHTML+=lvBadge(l)};
@@ -1286,7 +1375,7 @@ const _cf=closeFitur;closeFitur=function(){_cf();tabSync()};
 body.has-dash .s0back{display:flex}
 #step0 .mode-card{display:grid;grid-template-columns:60px 1fr;column-gap:14px;row-gap:2px;align-items:center;text-align:left;background:#fff;border:3px solid transparent;border-radius:22px;padding:16px;box-shadow:0 4px 0 #b9dcf7,0 10px 22px rgba(20,60,120,.10);min-height:92px}
 #step0 .mode-card::before{grid-row:1/3;width:56px;height:56px;border-radius:50%;background:#d7ebff;display:flex;align-items:center;justify-content:center;font-size:26px}
-#c-manual::before{content:'✏️'}#c-auto-kata::before{content:'📖'}#c-auto-kalimat::before{content:'💬'}#c-auto-toolkit::before{content:'🧰'}
+#c-manual::before{content:'✏️'}#c-auto-kata::before{content:'📖'}#c-auto-kalimat::before{content:'💬'}#c-auto-toolkit::before{content:'🧰'}#c-auto-slang::before{content:'😎'}
 #step0 .mode-card b{grid-column:2;font-size:21px;font-weight:800;color:#0b2f8f;align-self:end}
 #step0 .mode-card .desc{grid-column:2;font-size:14.5px;line-height:1.35;color:#2c4f86;font-weight:500;align-self:start}
 #step0 .mode-card.selected{background:#fff;border-color:#ffd24d;box-shadow:0 4px 0 #e8b72c,0 10px 22px rgba(20,60,120,.10)}
@@ -1312,142 +1401,115 @@ body.theme-midnight #content .fh,body.theme-midnight #content .item{background:r
 body.theme-midnight .input{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.3)}
 body.theme-midnight #content div[style*="background:var(--hair)"],body.theme-midnight button[onclick^="speak(qW"],body.theme-midnight button[onclick^="speak(revQ"]{background:rgba(255,255,255,.12)!important;color:#fff!important}
 </style>
-<style id="fitur-mockup">
-/* ===== Halaman Fitur ala mockup (sky + kartu putih + tab bawah melayang) ===== */
-#fiturSheet{background:
-  radial-gradient(150px 80px at 8% 9%,rgba(255,255,255,.8),transparent 72%),
-  radial-gradient(190px 100px at 96% 24%,rgba(255,255,255,.7),transparent 72%),
-  radial-gradient(260px 150px at 98% 74%,rgba(190,220,250,.9),transparent 72%),
-  radial-gradient(240px 130px at 4% 84%,rgba(255,255,255,.75),transparent 72%),
-  linear-gradient(180deg,#a8dcfb 0%,#9ccff6 50%,#cde7fb 100%)}
-#fiturSheet .sheet-box,#fiturSheet.open .sheet-box,body.theme-midnight #fiturSheet .sheet-box{background:transparent;color:#0a2a7a;box-shadow:none;border-radius:0;transform:none;max-width:520px;width:100%;height:100%;max-height:none;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 20px 130px}
-#fiturSheet .grab{display:none}
-.fv-pill{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:0 auto 38px;padding:8px 24px;border-radius:999px;background:#fff;border:5px solid rgba(255,255,255,.55);box-shadow:0 6px 18px rgba(20,80,160,.16);font-family:'Manrope',sans-serif;font-weight:800;font-size:26px;color:#0b4fd0}
-.fv-pill svg{width:34px;height:34px}
-#fiturSheet .sheet-h{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:46px;line-height:1.1;color:#0a2a7a;margin:0}
-.fv-sub{font-family:'Manrope',sans-serif;font-size:19px;font-weight:600;color:#5a8fd0;margin:6px 0 26px}
-#fiturSheet .list.sheetlist{padding:0}
-#fiturSheet .list button.forum{display:flex;align-items:center;justify-content:flex-start;gap:16px;width:100%;min-height:76px;padding:11px 18px 11px 12px;margin:0 0 14px;background:#fff;border:none;border-radius:22px;box-shadow:0 6px 16px rgba(30,90,170,.12);font-family:'Manrope',sans-serif;font-size:21px;line-height:1.15;font-weight:800;color:#0a2a7a;text-align:left}
-#fiturSheet .list button.forum:last-child{color:#0a2a7a;border-bottom:none}
-#fiturSheet .list button.forum:active{background:#eef6ff;transform:scale(.985)}
-#fiturSheet .list button.forum .ic{width:56px;height:56px;flex:none;border-radius:18px;background:#d7ebff;display:flex;align-items:center;justify-content:center}
-#fiturSheet .list button.forum .ic svg{width:30px;height:30px;stroke:#0b4fd0;stroke-width:2}
-#fiturSheet .list button.forum::after{content:'';font-size:0;width:11px;height:11px;flex:none;margin:0 6px 0 auto;border-top:3.5px solid #1d63e0;border-right:3.5px solid #1d63e0;transform:rotate(45deg)}
-#fiturSheet .list button.forum:has(.badge:not([style*="none"]))::after{margin-left:8px}
-#fiturSheet .list button.forum #dueBadge{margin:0 0 0 auto!important;font-size:14px;padding:3px 11px;background:#1d63e0}
-#fiturSheet .list button.forum .fl{flex:1;min-width:0}
-#fiturSheet .list button.forum .fl .state{margin:0 0 0 .3em;font:inherit;color:inherit}
-#fiturSheet .panel{background:#fff;color:#0a2a7a;border:none;border-radius:22px;box-shadow:0 6px 16px rgba(30,90,170,.12);margin-top:6px}
-/* tab bar melayang */
-#tabbar{left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));max-width:496px;margin:0 auto;border-radius:30px;padding:8px 10px;box-shadow:0 8px 28px rgba(20,60,120,.2)}
-#tabbar button{gap:3px;min-height:64px;color:#5f7fa6;border-bottom:none}
-#tabbar button svg{width:30px;height:30px;display:block}
-#tabbar button span{font-size:15px;font-weight:800;padding:3px 14px;border-radius:999px;line-height:1.2}
-#tabbar button.on{color:#0b4fd0}
-#tabbar button.on span{background:#4d94f5;color:#fff}
-</style>
-<script>
-(function(){
-  // ikon baru
-  ICO.test='<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M14 3l5 5v3M14 3v5h5M8 12h7M8 16h3"/><circle cx="17" cy="17" r="4" fill="#2f6fe4" stroke="none"/><path d="M15.2 17l1.3 1.3 2.3-2.5" stroke="#fff" stroke-width="1.6"/>';
-  ICO.review='<path d="M5 19.5V5.5A1.5 1.5 0 0 1 6.5 4H14M5 19.5A1.5 1.5 0 0 0 6.5 21H17a1 1 0 0 0 1-1v-5M5 19.5A1.5 1.5 0 0 1 6.5 18H18"/><path d="M17 3l.9 2.1L20 6l-2.1.9L17 9l-.9-2.1L14 6l2.1-.9zM10 9v5M7.5 11.5h5" stroke-width="1.7"/>';
-  ICO.bellOff='<path d="M6.5 10.5A5.5 5.5 0 0 1 12 6c1.4 0 2.6.5 3.6 1.3M17.8 12V17l2 2H8M10 21h4M3 3l18 18"/>';
-  // Pengingat: "Pengingat Mati" + ikon lonceng dicoret saat mati
-  renderReminderBtn=function(){const b=document.getElementById('btnReminder');if(b)b.innerHTML=`<i class="ic">${svg(notifOn?'bell':'bellOff')}</i><span class="fl">Pengingat<span class="state">${notifOn?'Aktif':'Mati'}</span></span>`};
-  renderReminderBtn();
-  // ikon Review & Final Test
-  const box=document.querySelector('#fiturSheet .sheet-box');
-  box.querySelectorAll('button.forum').forEach(b=>{
-    const t=b.textContent.trim(),i=b.querySelector('i.ic');if(!i)return;
-    if(t.startsWith('Review'))i.innerHTML=svg('review');
-    if(t.startsWith('Final Test'))i.innerHTML=svg('test');
-  });
-  // header pill + subjudul
-  const cloud='<svg viewBox="0 0 32 32"><path d="M9 25a6 6 0 0 1-.8-11.9A8 8 0 0 1 23.600 12 6.500 6.500 0 0 1 23 25z" fill="#6fb1f2"/><path d="M26 2l1.100 2.900L30 6l-2.900 1.100L26 10l-1.100-2.900L22 6l2.900-1.100z" fill="#2f6fe4"/></svg>';
-  const pill=document.createElement('div');pill.className='fv-pill';pill.innerHTML=cloud+'Sky Vocab';
-  box.insertBefore(pill,box.firstChild);
-  const h=box.querySelector('.sheet-h');
-  const sub=document.createElement('div');sub.className='fv-sub';sub.textContent='Pengaturan & fitur pembelajaran';h.after(sub);
-  // ikon tab bawah
-  const T={
-    home:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2.800 11a1 1 0 0 0 .7 1.700H5V20a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-7.300h1.500A1 1 0 0 0 21.200 11z"/></svg>',
-    learn:'<svg viewBox="0 0 26 26" fill="currentColor"><rect x="2" y="6" width="8" height="8" rx="2.400"/><rect x="12" y="6" width="8" height="8" rx="2.400"/><rect x="2" y="16" width="8" height="8" rx="2.400"/><rect x="12" y="16" width="8" height="8" rx="2.400"/><path d="M22.500 1l.9 2.100L25.500 4l-2.100.9-.9 2.100-.9-2.100L19.500 4l2.100-.9z"/></svg>',
-    prof:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.200"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7z"/></svg>'};
-  document.querySelectorAll('#tabbar button').forEach(b=>{const s=b.querySelector('span');b.innerHTML=T[b.dataset.t]||'';b.appendChild(s)});
-})();
-</script>
-<style id="fitur-theme">
-/* warna halaman Fitur & tab bawah ikut tema */
+<style id="app-pages">
+/* ============================================================
+   Halaman Fitur & Profil (satu gaya, ikut tema) + tab bar bawah
+   :is(#fiturSheet,#profSheet) = kedua halaman: #fiturSheet dan #profSheet
+   ============================================================ */
+
+/* --- Warna per tema (dipakai Fitur, Profil, tab bar) --- */
 body{--fv-top:#a8dcfb;--fv-mid:#9ccff6;--fv-bot:#cde7fb;--fv-cloud:rgba(255,255,255,.8);--fv-cloud2:rgba(190,220,250,.9);--fv-ink:#0a2a7a;--fv-sub:#5a8fd0;--fv-acc:#0b4fd0;--fv-chev:#1d63e0;--fv-tile:#d7ebff;--fv-pill:#4d94f5;--fv-card:#fff;--fv-shadow:rgba(30,90,170,.12);--fv-tab:#fff}
 body.theme-sunset{--fv-top:#ffb59a;--fv-mid:#ffc9a6;--fv-bot:#fff0d9;--fv-cloud2:rgba(255,214,190,.9);--fv-ink:#5a1f0c;--fv-sub:#b8663f;--fv-acc:#c4460f;--fv-chev:#e2652f;--fv-tile:#ffe1d2;--fv-pill:#e2652f;--fv-shadow:rgba(170,80,40,.14)}
 body.theme-forest{--fv-top:#a6dfc0;--fv-mid:#9ad8b6;--fv-bot:#e2f6ea;--fv-cloud2:rgba(190,235,208,.9);--fv-ink:#0f3a24;--fv-sub:#4f9a72;--fv-acc:#1f7d47;--fv-chev:#2f9e5e;--fv-tile:#d3f0df;--fv-pill:#2f9e5e;--fv-shadow:rgba(30,110,70,.14)}
 body.theme-midnight{--fv-top:#2a3a73;--fv-mid:#1c2750;--fv-bot:#10172c;--fv-cloud:rgba(255,255,255,.07);--fv-cloud2:rgba(255,255,255,.05);--fv-ink:#fff;--fv-sub:#b9c9f5;--fv-acc:#a9c0ff;--fv-chev:#a9c0ff;--fv-tile:rgba(255,255,255,.12);--fv-pill:#4d6fd8;--fv-card:rgba(36,46,78,.95);--fv-shadow:rgba(0,0,0,.25);--fv-tab:#1b2440}
-#fiturSheet{background:
+
+/* --- Kerangka halaman --- */
+:is(#fiturSheet,#profSheet){background:
   radial-gradient(150px 80px at 8% 9%,var(--fv-cloud),transparent 72%),
   radial-gradient(190px 100px at 96% 24%,var(--fv-cloud),transparent 72%),
   radial-gradient(260px 150px at 98% 74%,var(--fv-cloud2),transparent 72%),
   radial-gradient(240px 130px at 4% 84%,var(--fv-cloud),transparent 72%),
   linear-gradient(180deg,var(--fv-top) 0%,var(--fv-mid) 50%,var(--fv-bot) 100%)}
-#fiturSheet .sheet-box,#fiturSheet.open .sheet-box{color:var(--fv-ink)}
-#fiturSheet .sheet-h{color:var(--fv-ink)}
-.fv-sub{color:var(--fv-sub)}
-.fv-pill{background:var(--fv-card);color:var(--fv-acc)}
+:is(#fiturSheet,#profSheet) .sheet-box,:is(#fiturSheet,#profSheet).open .sheet-box,body.theme-midnight :is(#fiturSheet,#profSheet) .sheet-box{background:transparent;color:var(--fv-ink);box-shadow:none;border-radius:0;transform:none;display:block;max-width:520px;width:100%;height:100%;max-height:none;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 20px 130px}
+:is(#fiturSheet,#profSheet) .grab{display:none}
+:is(#fiturSheet,#profSheet) .sheet-h{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:46px;line-height:1.1;color:var(--fv-ink);margin:0}
+:is(#fiturSheet,#profSheet) .list.sheetlist{padding:0}
+.fv-pill{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:0 auto 38px;padding:8px 24px;border-radius:999px;background:var(--fv-card);color:var(--fv-acc);border:5px solid rgba(255,255,255,.55);box-shadow:0 6px 18px rgba(20,80,160,.16);font-family:'Manrope',sans-serif;font-weight:800;font-size:26px}
+.fv-pill svg{width:34px;height:34px}
 .fv-pill svg path:first-child{fill:var(--fv-chev);opacity:.55}
 .fv-pill svg path:last-child{fill:var(--fv-chev)}
-#fiturSheet .list button.forum,#fiturSheet .list button.forum:last-child{background:var(--fv-card);color:var(--fv-ink);box-shadow:0 6px 16px var(--fv-shadow)}
-#fiturSheet .list button.forum:active{filter:brightness(.96)}
-#fiturSheet .list button.forum .ic{background:var(--fv-tile)}
-#fiturSheet .list button.forum .ic svg{stroke:var(--fv-acc)}
-#fiturSheet .list button.forum .ic svg circle[fill]{fill:var(--fv-chev)}
-#fiturSheet .list button.forum::after{border-top-color:var(--fv-chev);border-right-color:var(--fv-chev)}
-#fiturSheet .list button.forum #dueBadge{background:var(--fv-chev);color:#fff}
-#fiturSheet .panel{background:var(--fv-card);color:var(--fv-ink);box-shadow:0 6px 16px var(--fv-shadow)}
-#tabbar{background:var(--fv-tab)}
-#tabbar button{color:var(--fv-sub)}
-#tabbar button.on{color:var(--fv-acc)}
-#tabbar button.on span{background:var(--fv-pill);color:#fff}
-</style>
-<style id="profil-mockup">
-#profSheet{background:
-  radial-gradient(150px 80px at 8% 9%,var(--fv-cloud),transparent 72%),
-  radial-gradient(190px 100px at 96% 24%,var(--fv-cloud),transparent 72%),
-  radial-gradient(260px 150px at 98% 74%,var(--fv-cloud2),transparent 72%),
-  radial-gradient(240px 130px at 4% 84%,var(--fv-cloud),transparent 72%),
-  linear-gradient(180deg,var(--fv-top) 0%,var(--fv-mid) 50%,var(--fv-bot) 100%)}
-#profSheet .sheet-box,#profSheet.open .sheet-box,body.theme-midnight #profSheet .sheet-box{background:transparent;color:var(--fv-ink);box-shadow:none;border-radius:0;transform:none;max-width:520px;width:100%;height:100%;max-height:none;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 20px 130px;display:block}
-#profSheet .grab{display:none}
-#profSheet .sheet-h{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:46px;line-height:1.1;color:var(--fv-ink);margin:0}
-#profSheet .list.sheetlist{padding:0}
+.fv-sub{font-family:'Manrope',sans-serif;font-size:19px;font-weight:600;color:var(--fv-sub);margin:6px 0 26px}
+
+/* --- Kartu menu (tombol .forum) --- */
+:is(#fiturSheet,#profSheet) .list button.forum,:is(#fiturSheet,#profSheet) .list button.forum:last-child{display:flex;align-items:center;justify-content:flex-start;gap:16px;width:100%;min-height:76px;padding:11px 18px 11px 12px;margin:0 0 14px;background:var(--fv-card);color:var(--fv-ink);border:none;border-radius:22px;box-shadow:0 6px 16px var(--fv-shadow);font-family:'Manrope',sans-serif;font-size:21px;line-height:1.15;font-weight:800;text-align:left}
+:is(#fiturSheet,#profSheet) .list button.forum:active{filter:brightness(.96);transform:scale(.985)}
+:is(#fiturSheet,#profSheet) .list button.forum .ic{width:56px;height:56px;flex:none;border-radius:18px;background:var(--fv-tile);display:flex;align-items:center;justify-content:center}
+:is(#fiturSheet,#profSheet) .list button.forum .ic svg{width:30px;height:30px;stroke:var(--fv-acc);stroke-width:2}
+:is(#fiturSheet,#profSheet) .list button.forum .ic svg circle[fill]{fill:var(--fv-chev)}
+:is(#fiturSheet,#profSheet) .list button.forum::after{content:'';font-size:0;width:11px;height:11px;flex:none;margin:0 6px 0 auto;border-top:3.5px solid var(--fv-chev);border-right:3.5px solid var(--fv-chev);transform:rotate(45deg)}
+:is(#fiturSheet,#profSheet) .list button.forum:has(.badge:not([style*="none"]))::after{margin-left:8px}
+:is(#fiturSheet,#profSheet) .list button.forum #dueBadge{margin:0 0 0 auto!important;font-size:14px;padding:3px 11px;background:var(--fv-chev);color:#fff}
+:is(#fiturSheet,#profSheet) .list button.forum .fl{flex:1;min-width:0}
+:is(#fiturSheet,#profSheet) .list button.forum .fl .state{margin:0 0 0 .3em;font:inherit;color:inherit}
+:is(#fiturSheet,#profSheet) .panel{background:var(--fv-card);color:var(--fv-ink);border:none;border-radius:22px;box-shadow:0 6px 16px var(--fv-shadow);margin-top:6px}
+
+/* --- Profil: kartu akun + pilihan tema --- */
 .pf-card{display:flex;align-items:center;gap:16px;padding:16px;margin:0 0 14px;background:var(--fv-card);border-radius:22px;box-shadow:0 6px 16px var(--fv-shadow);color:var(--fv-ink)}
 .pf-av{width:68px;height:68px;flex:none;border-radius:50%;background:var(--fv-tile);color:var(--fv-acc);display:flex;align-items:center;justify-content:center}
 .pf-av svg{width:40px;height:40px}
 .pf-t{font-family:'Manrope',sans-serif;font-weight:800;font-size:21px;line-height:1.2}
 .pf-s{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;color:var(--fv-sub);margin-top:3px}
 .pf-lbl{font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;margin:0 0 14px;color:var(--fv-ink)}
-.pf-themes{padding:16px 16px 12px}
+.pf-themes{display:block;padding:16px 16px 12px}
 .pf-themes .sw2{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0}
 #profSheet .sw2 button.pt{display:flex;flex-direction:column;align-items:center;gap:8px;width:auto;height:auto;padding:0;border:none;border-radius:0;background:transparent;color:var(--fv-ink);font-family:'Manrope',sans-serif;font-weight:700;font-size:14px}
+#profSheet .sw2 button.pt.on{font-weight:800}
 #profSheet .sw2 .dot{width:54px;height:54px;border-radius:50%;border:3px solid var(--fv-card);box-shadow:0 0 0 2px transparent,0 3px 8px rgba(0,0,0,.18);transition:box-shadow .15s}
 #profSheet .sw2 button.pt.on .dot{box-shadow:0 0 0 3px var(--fv-chev),0 3px 8px rgba(0,0,0,.18)}
-#profSheet .sw2 button.pt.on{font-weight:800}
-#profSheet .list button.forum{display:flex;align-items:center;justify-content:flex-start;gap:16px;width:100%;min-height:76px;padding:11px 18px 11px 12px;margin:0 0 14px;background:var(--fv-card);border:none;border-radius:22px;box-shadow:0 6px 16px var(--fv-shadow);font-family:'Manrope',sans-serif;font-size:21px;line-height:1.15;font-weight:800;color:var(--fv-ink);text-align:left}
-#profSheet .list button.forum:last-child{color:var(--fv-ink);border-bottom:none}
-#profSheet .list button.forum:active{filter:brightness(.96)}
-#profSheet .list button.forum .ic{width:56px;height:56px;flex:none;border-radius:18px;background:var(--fv-tile);display:flex;align-items:center;justify-content:center}
-#profSheet .list button.forum .ic svg{width:30px;height:30px;stroke:var(--fv-acc);stroke-width:2}
-#profSheet .list button.forum::after{content:'';font-size:0;width:11px;height:11px;flex:none;margin:0 6px 0 auto;border-top:3.5px solid var(--fv-chev);border-right:3.5px solid var(--fv-chev);transform:rotate(45deg)}
+
+/* --- Tab bar bawah melayang --- */
+#tabbar{left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));max-width:496px;margin:0 auto;padding:8px 10px;border-radius:30px;background:var(--fv-tab);box-shadow:0 8px 28px rgba(20,60,120,.2)}
+#tabbar button{gap:3px;min-height:64px;color:var(--fv-sub);border-bottom:none}
+#tabbar button svg{width:30px;height:30px;display:block}
+#tabbar button span{font-size:15px;font-weight:800;padding:3px 14px;border-radius:999px;line-height:1.2}
+#tabbar button.on{color:var(--fv-acc)}
+#tabbar button.on span{background:var(--fv-pill);color:#fff}
+
+/* --- Label jenis kata (noun, verb, ...) --- */
+.pos-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px 0 8px;letter-spacing:0}
+.pos-row .pc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:12px;font-weight:800}
+.pos-row .pc i{font-style:normal;font-weight:600;opacity:.85}
+.pos-tag{display:inline-block;margin-left:7px;padding:1px 8px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:11px;font-weight:800;vertical-align:middle;font-family:'Manrope',sans-serif}
 </style>
-<script>
+<script id="app-extensions">
+/* ============================================================
+   Tambahan aplikasi (dimuat paling akhir). Bagian:
+   1. Header halaman Fitur & Profil, ikon tab bawah
+   2. Profil: kartu akun + pilihan tema
+   3. Vocab terpisah per mode (+ sinkron cloud), termasuk mode Slang
+   4. Label jenis kata (noun, verb, adjective, ...)
+   ============================================================ */
+
+/* ---------- 1. Header halaman + ikon tab ---------- */
+const CLOUD_SVG='<svg viewBox="0 0 32 32"><path d="M9 25a6 6 0 0 1-.8-11.9A8 8 0 0 1 23.6 12 6.5 6.5 0 0 1 23 25z"/><path d="M26 2l1.1 2.9L30 6l-2.9 1.1L26 10l-1.1-2.9L22 6l2.9-1.1z"/></svg>';
+function decoratePage(sel,subtitle){
+  const box=document.querySelector(sel+' .sheet-box');
+  const pill=document.createElement('div');pill.className='fv-pill';pill.innerHTML=CLOUD_SVG+'Sky Vocab';
+  box.insertBefore(pill,box.firstChild);
+  const sub=document.createElement('div');sub.className='fv-sub';sub.textContent=subtitle;
+  box.querySelector('.sheet-h').after(sub);
+  return box;
+}
 (function(){
-  const box=document.querySelector('#profSheet .sheet-box');
-  const cloud=document.querySelector('.fv-pill').innerHTML;
-  const pill=document.createElement('div');pill.className='fv-pill';pill.innerHTML=cloud;box.insertBefore(pill,box.firstChild);
-  const h=box.querySelector('.sheet-h');
-  const sub=document.createElement('div');sub.className='fv-sub';sub.textContent='Akun, tema & pengaturan';h.after(sub);
+  const box=decoratePage('#fiturSheet','Pengaturan & fitur pembelajaran');
+  box.querySelectorAll('button.forum').forEach(b=>{
+    const i=b.querySelector('i.ic');
+    if(i&&b.textContent.trim().startsWith('Final Test'))i.innerHTML=svg('test');
+  });
+  const TAB={
+    home:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2.8 11a1 1 0 0 0 .7 1.7H5V20a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-7.3h1.5A1 1 0 0 0 21.2 11z"/></svg>',
+    learn:'<svg viewBox="0 0 26 26" fill="currentColor"><rect x="2" y="6" width="8" height="8" rx="2.4"/><rect x="12" y="6" width="8" height="8" rx="2.4"/><rect x="2" y="16" width="8" height="8" rx="2.4"/><rect x="12" y="16" width="8" height="8" rx="2.4"/><path d="M22.5 1l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
+    prof:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>'};
+  document.querySelectorAll('#tabbar button').forEach(b=>{const s=b.querySelector('span');b.innerHTML=TAB[b.dataset.t]||'';b.appendChild(s)});
+})();
+
+/* ---------- 2. Profil ---------- */
+(function(){
+  const box=decoratePage('#profSheet','Akun, tema & pengaturan');
   const lst=box.querySelector('.sheetlist'),info=document.getElementById('pfInfo');
   info.removeAttribute('style');info.className='pf-card';
-  const AV='<div class="pf-av"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.200"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7z"/></svg></div>';
-  info.innerHTML='<div class="pf-av"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.200"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7z"/></svg></div><div><div class="pf-t" id="pfT">Pelajar Sky Vocab</div><div class="pf-s" id="pfS"></div></div>';
+  const AV='<div class="pf-av"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>';
+  info.innerHTML='<div class="pf-av"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div><div><div class="pf-t" id="pfT">Pelajar Sky Vocab</div><div class="pf-s" id="pfS"></div></div>';
   // kartu tema berlabel
   const sw=lst.querySelector('.sw2');
   const card=document.createElement('div');card.className='pf-card pf-themes';card.style.display='block';
@@ -1462,11 +1524,11 @@ body.theme-midnight{--fv-top:#2a3a73;--fv-mid:#1c2750;--fv-bot:#10172c;--fv-clou
     const st=(document.getElementById('streakRow').innerText||'').trim(),md=document.getElementById('modeLabel').innerText;
     info.innerHTML=AV+'<div><div class="pf-t">Pelajar Sky Vocab</div><div class="pf-s">'+(st?st+' \u2022 ':'')+'Mode '+md+'</div></div>';markTheme()}};
 })();
-</script>
-<script id="vocab-per-mode">
-/* Vocab dipisah per mode: Manual, Otomatis-Kata, Otomatis-Kalimat, Otomatis-Toolkit */
+
+/* ---------- 3. Vocab per mode ---------- */
+/* Vocab dipisah per mode: Manual, Otomatis-Kata, Otomatis-Kalimat, Otomatis-Toolkit, Otomatis-Slang */
 (function(){
-  const CTXS=['manual','auto_kata','auto_kalimat','auto_toolkit'];
+  const CTXS=['manual','auto_kata','auto_kalimat','auto_toolkit','auto_slang'];
   const K=()=>mode==='manual'?'manual':'auto_'+autoType;
   const rd=k=>lsJ(k,null),nm=w=>String(w||'').toLowerCase();
   const clone=o=>JSON.parse(JSON.stringify(o));
@@ -1476,6 +1538,7 @@ body.theme-midnight{--fv-top:#2a3a73;--fv-mid:#1c2750;--fv-bot:#10172c;--fv-clou
     const w0=day1(vocab);
     if(!w0)return 'auto_kata';
     if(TOOLKIT_WEEKS.some(w=>day1(w)===w0))return 'auto_toolkit';
+    if(SLANG_WEEKS.some(w=>day1(w)===w0))return 'auto_slang';
     if([0,1,2].some(k=>day1(weekSet('kalimat',k))===w0)||PHRASE_BANK.some(x=>nm(x)===w0))return 'auto_kalimat';
     if(w0==='accurate'||[0,1,2].some(k=>day1(weekSet('kata',k))===w0)||WORD_BANK.some(x=>nm(x)===w0))return 'auto_kata';
     return 'manual';
@@ -1552,23 +1615,19 @@ body.theme-midnight{--fv-top:#2a3a73;--fv-mid:#1c2750;--fv-bot:#10172c;--fv-clou
     }catch(e){showM('Gagal tarik','Cek koneksi internet dulu ya')}
   };
 })();
-</script>
-<style id="pos-style">
-.pos-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px 0 8px;letter-spacing:0}
-.pos-row .pc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:12px;font-weight:800}
-.pos-row .pc i{font-style:normal;font-weight:600;opacity:.85}
-.pos-tag{display:inline-block;margin-left:7px;padding:1px 8px;border-radius:999px;background:rgba(80,140,230,.14);color:var(--accent-2);font-size:11px;font-weight:800;vertical-align:middle;font-family:'Manrope',sans-serif}
-</style>
-<script id="pos-local">
+
+/* ---------- 4. Label jenis kata ---------- */
 /* Jenis kata (noun, verb, adjective, ...) selalu tampil: kamus bawaan (offline) -> cache/online -> tebakan akhiran */
 (function(){
   const LOCAL={abandon:"v",abstruse:"a",accept:"v",accident:"n",achievement:"n",acquiesce:"v",acquire:"v",acrimony:"n",adventure:"n",advice:"n",agenda:"n",agreement:"n",airport:"n",alacrity:"n",algorithm:"n",allergy:"n",alliance:"n",alternative:"n|a",ambassador:"n",ambiguity:"n",ambitious:"a",anachronism:"n",ancient:"a",animosity:"n",anxiety:"n",apartment:"n",apologize:"v",appetizer:"n",apple:"n",appliance:"n",appointment:"n",appreciate:"v",apprehensive:"a",approach:"n|v",approve:"v",arduous:"a",argue:"v",argument:"n",arrange:"v",arrival:"n",arrive:"v",articulate:"a|v",assiduous:"a",assignment:"n",assist:"v",astute:"a",atmosphere:"n",attached:"a",audience:"n",austere:"a",automation:"n",available:"a",bad:"a",bag:"n",balance:"n|v",banana:"n",bandwidth:"n",battery:"n",behaviour:"n",bellicose:"a",belligerent:"a",benefit:"n|v",beverage:"n",big:"a",bird:"n",black:"a",blatant:"a",blue:"a",bolster:"v",book:"n|v",borrow:"v",boy:"n",brave:"a",bread:"n",break:"v|n",breakfast:"n",breeze:"n",bridge:"n",brother:"n",bucolic:"a",budget:"n",buy:"v",cacophony:"n",campaign:"n",campus:"n",cancel:"v",candid:"a",capacity:"n",capitulate:"v",capricious:"a",car:"n",career:"n",cat:"n",cautious:"a",celebrate:"v",century:"n",ceremony:"n",chair:"n",challenge:"n|v",cheap:"a",chicken:"n",chronic:"a",circumlocution:"n",circumstance:"n",circumvent:"v",citizen:"n",city:"n",clandestine:"a",clarify:"v",classmate:"n",climate:"n",clinic:"n",close:"v|a",coffee:"n",cogent:"a",coherent:"a",cold:"a",colleague:"n",come:"v",commensurate:"a",community:"n",competition:"n",complacent:"a",component:"n",concern:"n|v",conclusion:"n",condone:"v",confidence:"n",confident:"a",confirm:"v",conflict:"n|v",connotation:"n",consensus:"n",consequence:"n",conservation:"n",consider:"v",conspicuous:"a",contentious:"a",contract:"n|v",convenient:"a",cooperation:"n",corner:"n",courtesy:"n",creative:"a",criterion:"n",crowded:"a",crucial:"a",cruel:"a",cuisine:"n",culture:"n",cumbersome:"a",curious:"a",currency:"n",curriculum:"n",customer:"n",cybersecurity:"n",cynical:"a",dangerous:"a",database:"n",day:"n",deadline:"n",debilitate:"v",debugging:"n",decision:"n",decline:"v|n",deference:"n",delay:"n|v",delicious:"a",democracy:"n",denigrate:"v",departure:"n",dessert:"n",desultory:"a",detail:"n",device:"n",diagnosis:"n",dichotomy:"n",didactic:"a",diligent:"a",dinner:"n",diplomat:"n",direction:"n",disadvantage:"n",discipline:"n",discretion:"n",disparage:"v",disparate:"a",dissent:"n|v",distraction:"n",dog:"n",door:"n",download:"v|n",drink:"v|n",drought:"n",eat:"v",ebullience:"n",ecosystem:"n",efficacious:"a",efficient:"a",egg:"n",egregious:"a",election:"n",elusive:"a",emerge:"v",emergency:"n",emotion:"n",employee:"n",encourage:"v",encryption:"n",enervate:"v",enhance:"v",enigma:"n",enormous:"a",ensure:"v",enthusiasm:"n",environment:"n",ephemeral:"a",equality:"n",equipment:"n",equivocal:"a",error:"n",esoteric:"a",evaluate:"v",evidence:"n",exam:"n",excitement:"n",exercise:"n|v",exhaustive:"a",exhibition:"n",expense:"n",experience:"n|v",eye:"n",faculty:"n",family:"n",father:"n",favor:"n|v",feature:"n|v",fecund:"a",feedback:"n",festival:"n",fish:"n",flavor:"n",flexible:"a",flower:"n",focus:"n|v",food:"n",forget:"v",forgive:"v",freedom:"n",friend:"n",frugal:"a",frustration:"n",fuel:"n",furniture:"n",garrulous:"a",generation:"n",generous:"a",gentle:"a",girl:"n",go:"v",goal:"n",good:"a",government:"n",graduate:"n|v",grateful:"a",gratitude:"n",green:"a",greetings:"n",habit:"n",habitat:"n",hand:"n",happy:"a",harvest:"n|v",head:"n",heritage:"n",highway:"n",holiday:"n",honest:"a",honor:"n|v",hospital:"n",hot:"a",house:"n",household:"n",humble:"a",iconoclast:"n",idiosyncratic:"a",illness:"n",immune:"a",improve:"v",inchoate:"a",inconvenience:"n",ineffable:"a",infection:"n",influence:"n|v",ingredient:"n",innovative:"a",instrument:"n",interface:"n",intersection:"n",interview:"n|v",investment:"n",invitation:"n",invoice:"n",jealousy:"n",journey:"n",justice:"n",justify:"v",kindly:"adv",kitchen:"n",laboratory:"n",laconic:"a",landlord:"n",landscape:"n",laugh:"v|n",leadership:"n",lecture:"n|v",lecturer:"n",leftover:"n",license:"n",listen:"v",loneliness:"n",lonely:"a",loyal:"a",luggage:"n",machine:"n",magnanimous:"a",maintenance:"n",marry:"v",masterpiece:"n",measure:"n|v",mechanic:"n",medicine:"n",meeting:"n",melody:"n",meticulous:"a",milk:"n",mistake:"n",modern:"a",money:"n",monument:"n",moon:"n",morning:"n",mortgage:"n",mother:"n",motivation:"n",mouth:"n",music:"n",negotiate:"v",negotiation:"n",neighbor:"n",neighborhood:"n",neighbour:"n",network:"n",new:"a",night:"n",nose:"n",notify:"v",nutrition:"n",obfuscate:"v",old:"a",open:"a|v",opinion:"n",opportunity:"n",optimistic:"a",parking:"n",passenger:"n",passport:"n",password:"n",patience:"n",pedestrian:"n",pen:"n",performance:"n",permission:"n",pernicious:"a",pharmacy:"n",phone:"n",please:"adv|v",pleasure:"n",policy:"n",polite:"a",pollution:"n",portion:"n",practice:"n|v",pragmatic:"a",preference:"n",prepare:"v",prescription:"n",presentation:"n",priority:"n",productivity:"n",progress:"n|v",project:"n|v",promotion:"n",property:"n",proposal:"n",prototype:"n",proud:"a",prudent:"a",qualification:"n",question:"n|v",quixotic:"a",rain:"n|v",read:"v",realistic:"a",recalcitrant:"a",receipt:"n",recipe:"n",recommend:"v",recovery:"n",recycle:"v",red:"a",reduce:"v",reflection:"n",refugee:"n",regards:"n",regret:"n|v",regulation:"n",rehearsal:"n",reliable:"a",relief:"n",reminder:"n",renewable:"a",renovation:"n",repair:"v|n",reply:"n|v",report:"n|v",represent:"v",request:"n|v",require:"v",research:"n|v",resolve:"v|n",respect:"n|v",rest:"n|v",resume:"v|n",revenue:"n",rhythm:"n",rice:"n",routine:"n",run:"v",safety:"n",salary:"n",sanction:"n|v",schedule:"n|v",scholarship:"n",school:"n",sculpture:"n",season:"n",sell:"v",semester:"n",serendipity:"n",server:"n",shoe:"n",shy:"a",signal:"n|v",sincerely:"adv",sister:"n",sit:"v",skeptical:"a",sleep:"v|n",small:"a",software:"n",solution:"n",sorry:"a",souvenir:"n",sovereignty:"n",speak:"v",species:"n",stand:"v|n",storage:"n",stranger:"n",strategy:"n",suggest:"v",summit:"n",sun:"n",sunrise:"n",sunset:"n",supermarket:"n",surgeon:"n",sustainable:"a",sycophant:"n",sympathy:"n",symptom:"n",table:"n",taciturn:"a",tea:"n",teacher:"n",teamwork:"n",technician:"n",tenant:"n",thanks:"int|n",theater:"n",therapy:"n",thunder:"n",ticket:"n",tomorrow:"adv|n",tool:"n",tradition:"n",traffic:"n",treatment:"n",treaty:"n",tree:"n",truth:"n",tuition:"n",ubiquitous:"a",understand:"v",unfortunately:"adv",update:"n|v",upload:"v|n",usually:"adv",utensil:"n",vaccine:"n",vegetable:"n",vehicle:"n",village:"n",vindicate:"v",walk:"v|n",water:"n|v",weather:"n",week:"n",welcome:"int|a",wellness:"n",whisper:"v|n",white:"a",wilderness:"n",window:"n",work:"n|v",worry:"v|n",write:"v",year:"n",zealous:"a",design:"n|v"};
   const CODE={n:'noun',v:'verb',a:'adjective',adv:'adverb',int:'interjection'};
-  Object.assign(POS_ID,{phrase:'frasa / ungkapan'});
+  Object.assign(POS_ID,{phrase:'frasa / ungkapan',slang:'bahasa gaul'});
+  const SLANG_SET=new Set(SLANG_WEEKS.flatMap(w=>Object.values(w).flat()).map(i=>i.word.toLowerCase()));
   const SUF=[[/(tion|sion|ment|ness|ity|ship|ance|ence|ism|ist|hood|dom)$/,'noun'],[/(ous|ful|ive|less|able|ible|ical|ish)$/,'adjective'],[/ly$/,'adverb'],[/(ize|ise|ify)$/,'verb']];
   function posList(w,online){
     const k=String(w||'').trim().toLowerCase();
     if(!k)return[];
+    if(SLANG_SET.has(k))return['slang'];
     if(/\s/.test(k))return['phrase'];
     if(LOCAL[k])return LOCAL[k].split('|').map(c=>CODE[c]||c);
     if(online&&online.length)return online.slice(0,3);
